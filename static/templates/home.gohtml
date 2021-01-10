@@ -1,0 +1,27 @@
+{{template "header"}}
+
+<body>
+    <div>
+        <h1>Q & A Game</h1>
+    </div>
+    {{if .Started}}
+    <p>
+        Game in progress - wait for the next one.
+    </p>
+    {{template "killform"}}
+    {{else}}
+    <h3>Current Players</h3>
+    <ul>
+        {{range .Users}}
+        <li>{{.}}</li>
+        {{end}}
+
+    </ul>
+    <h3>Join</h3>
+    <form method="POST" action="/">
+        <label>Name: <input name="name" type="text" id="name-input" value=""/></label>
+        <br>
+        <input type="submit" value="Join Game" />
+    </form>
+    {{end}}
+</body>

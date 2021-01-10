@@ -1,0 +1,75 @@
+{{define "header"}}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://newcss.net/lite.css">
+    <link rel="stylesheet" href="https://newcss.net/theme/terminal.css">
+    <title>Q & A Game</title>
+    <script type = "text/javascript">
+         function addHidden(theForm, key, value) {
+            // Create a hidden input element, and append it to the form:
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key; // 'the key/name of the attribute/field that is sent to the server
+            input.value = value;
+            theForm.appendChild(input);
+         }
+         function uuidv4() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+               var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+               return v.toString(16);
+            });
+         }
+         function RunWebSocket() {
+            if ("WebSocket" in window) {
+               var wsTrack = uuidv4();
+               // Track the websocket conection on the form
+               if (document.forms.length > 0) {
+                  addHidden(document.forms[0], "wstrack", wsTrack);
+               }
+               // Let us open a web socket
+               var wsProtocol = "ws:";
+               if (location.protocol === 'https:') {
+                  wsProtocol = "wss:";
+               }
+               var ws = new WebSocket(wsProtocol + "//" + window.location.host + "/ws?wstrack=" + wsTrack);
+
+               ws.onmessage = function (evt) {
+                  var nameInput = document.getElementById("name-input");
+                  if (nameInput && nameInput.value !== "") {
+                     return;
+                  }
+                  var questionInput = document.getElementsByClassName("question-box");
+                  if (questionInput && questionInput.length > 0) {
+                     return;
+                  }
+                  var answerInput = document.getElementsByClassName("answer-box");
+                  if (answerInput && answerInput.length > 0) {
+                     return;
+                  }
+                  var voteInput = document.getElementsByClassName("vote-input");
+                  if (voteInput && voteInput.length > 0) {
+                     return;
+                  }
+                  // Sleep so Chrome doesn't race
+                  setTimeout(function(){window.location.reload();}, 10);
+               };
+            } else {
+               // The browser doesn't support WebSocket
+               alert("WebSocket NOT supported by your Browser!");
+            }
+         }
+         window.onload = RunWebSocket;
+      </script>
+</head>
+{{end}}
+
+{{define "killform"}}
+<form method="POST">
+   <input name="action" type="hidden" value="killgame" />
+   <input type="submit" value="End Game" />
+</form>
+{{end}}

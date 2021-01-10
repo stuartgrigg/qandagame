@@ -1,0 +1,102 @@
+{{template "header"}}
+
+<body>
+    <p>Player - {{.MyName}}</p>
+    {{if .Lobby}}
+    <h1>Lobby</h1>
+    <h3>Current Players</h3>
+    <ul>
+        {{range .Users}}
+        <li>{{.}}</li>
+        {{end}}
+    </ul>
+    <form method="POST">
+        <input name="action" type="hidden" value="startgame" />
+        {{if .EnoughUsersToStart}}
+            <input type="submit" value="Start Game" />
+        {{else}}
+            <p>At least three players are required to start a game.</p>
+        {{end}}
+    </form>
+    {{end}}
+
+    {{if .SubmitQuestion}}
+        {{if eq .MyQuestion ""}}
+        <h1>Ask a question you really want an answer to.</h1>
+        <form method="POST">
+            <input name="action" type="hidden" value="submitquestion" />
+            <label>Question: <br><textarea name="question" cols="50" class="question-box"></textarea>
+            <br>
+            <input type="submit" value="Submit Question" />
+        </form>
+        {{else}}
+        <h1>Waiting for {{.UsersToQuestion}} to add questions</h1>
+        <p>My question: {{.MyQuestion}}</p>
+        {{end}}
+    {{end}}
+
+    {{if .SubmitAnswers}}
+        {{if not .HasAnswered}}
+        <h1>Try and answer your friends&apos; questions.</h1>
+        <form method = "POST">
+            <input name="action" type="hidden" value="answerquestions"/>
+            {{range .MyQuestionsToAnswer}}
+                <label>{{.QuestionText}}: <br><textarea name="answer/{{.ID}}" cols="50" class="answer-box"></textarea></label>
+                <br>
+            {{end}}
+            <input type="submit" value="Submit Answers" />
+        <form>
+        {{else}}
+        <h1>Waiting for {{.UsersToAnswer}} to answer</h1>
+        {{end}}
+    {{end}}
+
+    {{if .Voting}}
+        {{if not .HasVoted}}
+        <h1>Vote for the best answer!</h1>
+        <h2>{{.MyQuestionToVoteOn.QuestionText}}</h2>
+        <form method = "POST">
+            <input name="action" type="hidden" value="voteonanswers" />
+            <input name="questionID" type="hidden" value="{{.MyQuestionToVoteOn.ID}}" />
+            {{range .MyQuestionToVoteOn.AnswersToVoteOn}}
+                <label>{{.AnswerText}}: <input type="radio" name="answer" value="{{.ID}}" class="vote-input" required/></label>
+                <br>
+            {{end}}
+            <br>
+            <input type="submit" value="Submit Vote" />
+        <form>
+        {{else}}
+        <h1>Waiting for {{.UsersToVote}} to vote</h1>
+        {{end}}
+    {{end}}
+
+    {{if .VoteResult}}
+        <h1>{{.VotingResults.QuestionText}}</h1>
+        <h2>written by {{.VotingResults.QuestionerName}}</h2>
+        <ul>
+            {{range .VotingResults.Results}}
+            <li>
+                {{.Writer}} - {{.AnswerText}} - voted by: {{.Voters}}
+            </li>
+            {{end}}
+        </ul>
+         <form method="POST">
+            <input name="action" type="hidden" value="nextquestion" />
+            <input type="submit" value="Next" />
+        </form>
+    {{end}}
+
+    {{if .GameResult}}
+        <h1>Game Results!</h1>
+        <ol>
+            {{range .GameResults.PlayerScores}}
+                <li>{{.Name}} - {{.Score}}</li>
+            {{end}}
+        </ol>
+    {{end}}
+
+    <br>
+    <hr>
+    {{template "killform"}}
+
+</body>
