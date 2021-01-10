@@ -20,7 +20,7 @@ To then expose things globally first install [localtunnel](https://github.com/lo
 ```sh
 npm install -g localtunnel
 ```
-and then forwarding to the app with
+and then start forwarding to the app with
 ```sh
 lt --port 12121
 ```
