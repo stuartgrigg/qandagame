@@ -13,7 +13,7 @@ type Response interface{}
 type RequestAndResponseChannel struct {
 	request         Request
 	responseChannel chan Response
-	remoteIP        string
+	clientID        string
 }
 
 type question struct {
@@ -98,7 +98,7 @@ func (w *Worker) resetWorker() {
 
 type GameStateUpdate struct {
 	GameState GameState
-	RemoteIP  string
+	ClientID  string
 }
 
 type GameState int
@@ -118,11 +118,11 @@ func (w *Worker) Run() {
 	}
 }
 
-func (w *Worker) SubmitRequest(r Request, remoteIP string) Response {
+func (w *Worker) SubmitRequest(r Request, clientID string) Response {
 	randr := RequestAndResponseChannel{
 		request:         r,
 		responseChannel: make(chan Response),
-		remoteIP:        remoteIP,
+		clientID:        clientID,
 	}
 	w.requests <- randr
 	response := <-randr.responseChannel
@@ -338,7 +338,7 @@ func (w *Worker) handleRequest(randr RequestAndResponseChannel) {
 					id:   req.ID,
 					name: req.Name,
 				}
-				w.updateGameState(AwaitingStart, randr.remoteIP)
+				w.updateGameState(AwaitingStart, randr.clientID)
 			}
 		}
 	case SubmitQuestionRequest:
@@ -360,10 +360,10 @@ func (w *Worker) handleRequest(randr RequestAndResponseChannel) {
 					}
 				}
 				if !userWithNoQuestion {
-					w.updateGameState(SubmittingAnswers, randr.remoteIP)
+					w.updateGameState(SubmittingAnswers, randr.clientID)
 				} else {
 					// Push the "hasQuestioned" list
-					w.updateGameState(SubmittingQuestions, randr.remoteIP)
+					w.updateGameState(SubmittingQuestions, randr.clientID)
 				}
 			}
 		}
@@ -386,7 +386,7 @@ func (w *Worker) handleRequest(randr RequestAndResponseChannel) {
 						}
 					}
 					if !userNotAnswered {
-						w.updateGameState(Voting, randr.remoteIP)
+						w.updateGameState(Voting, randr.clientID)
 						w.usersToBeVoted = []string{}
 						for _, user := range w.users {
 							w.usersToBeVoted = append(w.usersToBeVoted, user.id)
@@ -394,7 +394,7 @@ func (w *Worker) handleRequest(randr RequestAndResponseChannel) {
 						}
 					} else {
 						// Push the "hasAnswered" list
-						w.updateGameState(SubmittingAnswers, randr.remoteIP)
+						w.updateGameState(SubmittingAnswers, randr.clientID)
 					}
 				}
 			}
@@ -427,10 +427,10 @@ func (w *Worker) handleRequest(randr RequestAndResponseChannel) {
 						for _, user := range w.users {
 							user.voted = false
 						}
-						w.updateGameState(VoteResult, randr.remoteIP)
+						w.updateGameState(VoteResult, randr.clientID)
 					} else {
 						// Push the "hasVoted" list
-						w.updateGameState(Voting, randr.remoteIP)
+						w.updateGameState(Voting, randr.clientID)
 					}
 				}
 			}
@@ -440,30 +440,30 @@ func (w *Worker) handleRequest(randr RequestAndResponseChannel) {
 			if w.state == VoteResult {
 				if w.votingUserIndex < len(w.usersToBeVoted)-1 {
 					w.votingUserIndex++
-					w.updateGameState(Voting, randr.remoteIP)
+					w.updateGameState(Voting, randr.clientID)
 				} else {
-					w.updateGameState(GameResult, randr.remoteIP)
+					w.updateGameState(GameResult, randr.clientID)
 				}
 			}
 		}
 	case StartGameRequest:
 		if (len(w.users)) >= 3 {
-			w.updateGameState(SubmittingQuestions, randr.remoteIP)
+			w.updateGameState(SubmittingQuestions, randr.clientID)
 			w.logger.LogGameStarted()
 		}
 	case ResetWorkerRequest:
 		w.resetWorker()
-		w.updateGameState(AwaitingStart, randr.remoteIP)
+		w.updateGameState(AwaitingStart, randr.clientID)
 	}
 	randr.responseChannel <- struct{}{}
 }
 
-func (w *Worker) updateGameState(state GameState, remoteIP string) {
+func (w *Worker) updateGameState(state GameState, clientID string) {
 	w.state = state
 	go func() {
 		w.gameStateUpdates <- GameStateUpdate{
 			GameState: state,
-			RemoteIP:  remoteIP,
+			ClientID:  clientID,
 		}
 	}()
 }

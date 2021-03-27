@@ -25,8 +25,6 @@ func (s *Server) WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	s.wsClients[ws] = r.URL.Query()["wstrack"][0]
 
-	log.Println("IP: " + s.wsClients[ws])
-
 	// reader spins forever
 	s.reader(ws)
 }
@@ -37,8 +35,7 @@ func (s *Server) GameUpdateBroadcaster() {
 		// Sleep so the response is sent first
 		for conn, ip := range s.wsClients {
 			// Don't send an update to whoever triggered it
-			fmt.Println("ips", update.RemoteIP, ip)
-			if update.RemoteIP == ip {
+			if update.ClientID == ip {
 				continue
 			}
 			err := conn.WriteMessage(websocket.TextMessage, []byte{})

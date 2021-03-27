@@ -1,6 +1,7 @@
 package server
 
 import (
+	"embed"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -24,9 +25,9 @@ type Server struct {
 	wsClients      map[*websocket.Conn]string
 }
 
-func NewServer(worker *engine.Worker, updatesChannel chan engine.GameStateUpdate) *Server {
-	rootTemplate := template.Must(template.ParseFiles(rootTemplateLocation, commonTemplateLocation))
-	gameTemplate := template.Must(template.ParseFiles(gameTemplateLocation, commonTemplateLocation))
+func NewServer(worker *engine.Worker, updatesChannel chan engine.GameStateUpdate, templatesFS embed.FS) *Server {
+	rootTemplate := template.Must(template.ParseFS(templatesFS, rootTemplateLocation, commonTemplateLocation))
+	gameTemplate := template.Must(template.ParseFS(templatesFS, gameTemplateLocation, commonTemplateLocation))
 	return &Server{
 		worker:         worker,
 		updatesChannel: updatesChannel,
@@ -140,17 +141,17 @@ func (s *Server) RootHandler(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprintf(w, "ParseForm() err: %v", err)
 				return
 			}
-			remoteIP := r.FormValue("wstrack")
+			clientID := r.FormValue("wstrack")
 			name := r.FormValue("name")
 			action := r.FormValue("action")
 			if action == "killgame" {
-				s.worker.SubmitRequest(engine.ResetWorkerRequest{}, remoteIP)
+				s.worker.SubmitRequest(engine.ResetWorkerRequest{}, clientID)
 				http.Redirect(w, r, "/", http.StatusSeeOther)
 				return
 			}
 			if s.worker.GetGameState() == engine.AwaitingStart {
 				id, _ := uuid.NewV4()
-				s.worker.SubmitRequest(engine.NewUserRequest{ID: id.String(), Name: name}, remoteIP)
+				s.worker.SubmitRequest(engine.NewUserRequest{ID: id.String(), Name: name}, clientID)
 				http.Redirect(w, r, "game/"+id.String(), http.StatusSeeOther)
 				return
 			}
@@ -171,17 +172,17 @@ func (s *Server) RootHandler(w http.ResponseWriter, r *http.Request) {
 				s.gameTemplate.Execute(w, s.loadGameData(userID))
 			case "POST":
 				action := r.FormValue("action")
-				remoteIP := r.FormValue("wstrack")
+				clientID := r.FormValue("wstrack")
 				switch action {
 				case "startgame":
-					s.worker.SubmitRequest(engine.StartGameRequest{}, remoteIP)
+					s.worker.SubmitRequest(engine.StartGameRequest{}, clientID)
 				case "submitquestion":
 					questionID, _ := uuid.NewV4()
 					s.worker.SubmitRequest(engine.SubmitQuestionRequest{
 						ID:     questionID.String(),
 						Text:   r.FormValue("question"),
 						UserID: userID,
-					}, remoteIP)
+					}, clientID)
 				case "answerquestions":
 					questionIDToAnswer := map[string]engine.MyAnswer{}
 					err := r.ParseForm()
@@ -202,16 +203,16 @@ func (s *Server) RootHandler(w http.ResponseWriter, r *http.Request) {
 					s.worker.SubmitRequest(engine.SubmitAnswersRequest{
 						UserID:             userID,
 						QuestionIDToAnswer: questionIDToAnswer,
-					}, remoteIP)
+					}, clientID)
 				case "voteonanswers":
 					s.worker.SubmitRequest(engine.SubmitVoteRequest{
 						UserID:   userID,
 						AnswerID: r.FormValue("answer"),
-					}, remoteIP)
+					}, clientID)
 				case "nextquestion":
-					s.worker.SubmitRequest(engine.NewQuestionRequest{}, remoteIP)
+					s.worker.SubmitRequest(engine.NewQuestionRequest{}, clientID)
 				case "killgame":
-					s.worker.SubmitRequest(engine.ResetWorkerRequest{}, remoteIP)
+					s.worker.SubmitRequest(engine.ResetWorkerRequest{}, clientID)
 					http.Redirect(w, r, "/", http.StatusSeeOther)
 					return
 				}

@@ -1,6 +1,6 @@
 module github.com/stuartgrigg/qandagame
 
-go 1.13
+go 1.16
 
 require (
 	github.com/gofrs/uuid v3.2.0+incompatible

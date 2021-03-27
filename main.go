@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,6 +11,10 @@ import (
 	"github.com/stuartgrigg/qandagame/logging"
 	"github.com/stuartgrigg/qandagame/server"
 )
+
+// Embed the templates directory
+//go:embed static/templates
+var templatesFS embed.FS
 
 func main() {
 	address := os.Getenv("SERVER_ADDRESS")
@@ -22,7 +27,7 @@ func main() {
 	go w.Run()
 
 	fmt.Println("Starting server")
-	s := server.NewServer(w, updates)
+	s := server.NewServer(w, updates, templatesFS)
 	go s.GameUpdateBroadcaster()
 	http.HandleFunc("/ws", s.WebSocketHandler)
 	http.HandleFunc("/", s.RootHandler)
