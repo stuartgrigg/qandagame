@@ -23,6 +23,7 @@
     {{if .SubmitQuestion}}
         {{if eq .MyQuestion ""}}
         <h1>Ask a question you really want an answer to.</h1>
+        <h6>Waiting for {{.UsersToQuestion}} to add questions</h6>
         <form method="POST">
             <input name="action" type="hidden" value="submitquestion" />
             <label>Question: <br><textarea name="question" cols="50" class="question-box"></textarea>
@@ -38,6 +39,7 @@
     {{if .SubmitAnswers}}
         {{if not .HasAnswered}}
         <h1>Try and answer your friends&apos; questions.</h1>
+        <h6>Waiting for {{.UsersToAnswer}} to answer</h6>
         <form method = "POST">
             <input name="action" type="hidden" value="answerquestions"/>
             {{range .MyQuestionsToAnswer}}
