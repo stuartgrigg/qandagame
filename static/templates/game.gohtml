@@ -57,6 +57,7 @@
         {{if not .HasVoted}}
         <h1>Vote for the best answer!</h1>
         <h2>{{.MyQuestionToVoteOn.QuestionText}}</h2>
+        <h6>Waiting for {{.UsersToVote}} to vote</h6>
         <form method = "POST">
             <input name="action" type="hidden" value="voteonanswers" />
             <input name="questionID" type="hidden" value="{{.MyQuestionToVoteOn.ID}}" />
