@@ -68,7 +68,7 @@
 {{end}}
 
 {{define "killform"}}
-<form method="POST">
+<form onsubmit="return confirm('Do you really want to end the game?');" method="POST">
    <input name="action" type="hidden" value="killgame" />
    <input type="submit" value="End Game" />
 </form>
